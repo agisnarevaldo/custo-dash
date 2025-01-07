@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Product } from './types'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
 
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const eventSourceRef = useRef<EventSource | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -98,16 +101,40 @@ export default function ProductList() {
     }
   }, [fetchProducts, setupEventSource])
 
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    //  || (product.category && product.category.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {products.map((product) => (
-        <div key={product.id} className="border rounded-lg p-4 shadow-sm">
-          <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
-          <p className="text-gray-600 mb-2">{product.description}</p>
-          <p className="text-lg font-bold mb-2">${product.price.toFixed(2)}</p>
-          <p className="text-sm text-gray-500">In stock: {product.stock}</p>
-        </div>
-      ))}
+    <div className="space-y-6">
+      <div className="max-w-md mx-auto">
+        <Label htmlFor="search">Search Products</Label>
+        <Input
+          id="search"
+          type="text"
+          placeholder="Search here..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="mt-1"
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredProducts.map((product) => (
+          <div key={product.id} className="border rounded-lg p-4 shadow-sm">
+            <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
+            <p className="text-gray-600 mb-2">{product.description}</p>
+            <p className="text-lg font-bold mb-2">${product.price.toFixed(2)}</p>
+            <p className="text-sm text-gray-500">In stock: {product.stock}</p>
+            {/* {product.category && (
+              <p className="text-sm text-blue-500 mt-2">Category: {product.category}</p>
+            )} */}
+          </div>
+        ))}
+      </div>
+      {filteredProducts.length === 0 && (
+        <p className="text-center text-gray-500">No products found matching your search.</p>
+      )}
     </div>
   )
 }
